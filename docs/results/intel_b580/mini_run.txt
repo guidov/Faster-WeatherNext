@@ -1,0 +1,17 @@
+Platform 'oneapi' is experimental and not all JAX functionality may be correctly supported!
+WARNING:absl:Skipping gradient checkpointing for sequence length of 1
+WARNING:absl:No coordinates found for dim noise_channels of array <xarray.DataArray 'noise' (batch: 1, channels: 1, noise_channels: 32)> Size: 128B
+JitTracer(float32[1,1,32])
+Dimensions without coordinates: batch, channels, noise_channels., using index for param name. This may make model surgery more error prone if changing coordinates at fine-tuning time.
+/scratch/guido/jax-xpu-test/lib/python3.12/site-packages/scipy/sparse/_index.py:216: SparseEfficiencyWarning: Changing the sparsity structure of a csr_matrix is expensive. lil and dok are more efficient.
+  self._set_arrayXarray(i, j, x)
+WARNING:root:No normalization scale found for cyclone_exists_gaussian_unit_mode
+WARNING:root:No normalization location found for cyclone_exists_gaussian_unit_mode
+  compiled b=1: temp 0.58 GiB
+  WeatherNextCyclones_Mini fwn b=1 default  temp  0.58 GiB step  1.10s compile   10s
+
+=== Physical Soundness Inspection ===
+2m_temperature               | min:     209.56 | max:     314.65 | mean:     279.61 | corr vs analysis (+6h): 0.9994
+mean_sea_level_pressure      | min:   94963.30 | max:  103588.23 | mean:  100991.36 | corr vs analysis (+6h): 0.9991
+10m_u_component_of_wind      | min:     -22.55 | max:      24.62 | mean:      -0.18 | corr vs analysis (+6h): 0.9785
+10m_v_component_of_wind      | min:     -25.06 | max:      26.92 | mean:       0.14 | corr vs analysis (+6h): 0.9772

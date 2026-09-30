@@ -195,7 +195,7 @@ for both processes. Files: [`results/earth2studio/`](results/earth2studio/).
 
 ## 7. Intel XPU / Arc GPUs (OpenXLA via oneAPI)
 
-Intel GPUs (such as Arc B-series / Battlemage) run via Intel's OpenXLA PJRT plugin (`jax-oneapi-plugin`). Because Intel GPUs do not use NVIDIA CUDA / Triton Pallas kernels, `faster-weathernext` automatically dispatches to the pure XLA chunked attention implementation (`attention_impl() == "xla"`). A full 0.25° rollout step on Intel is currently a TODO.
+Intel GPUs (such as Arc B-series / Battlemage) run via Intel's OpenXLA PJRT plugin (`jax-oneapi-plugin`). Because Intel GPUs do not use NVIDIA CUDA / Triton Pallas kernels, `faster-weathernext` automatically dispatches to the pure XLA chunked attention implementation (`attention_impl() == "xla"`).
 
 ### Installation
 
@@ -218,13 +218,21 @@ weathernext compatibility: OK
 attention implementation: xla  (options: Options(attention='auto', replace_attention=True, reorder=True, strict_fp32=False, attn_chunk=512, grid_chunk=32768, edge_chunk=65536, layer_loop=True))
 ```
 
-One WN2 layer's masked mesh attention (40,962 nodes, 6 heads × 128 dim, 32-hop mask, `scripts/attn_bench.py`):
+Benchmarks on Intel Arc B580 (Xe2, 12 GB VRAM):
 
-| GPU | arch | memory | attention | precision | ms/layer | attention only, ×24 |
+| Model / Benchmark | Resolution | Attention | Precision | Temp Memory | Runtime | Notes |
 |---|---|---|---|---|---|---|
-| Intel Arc B580 (contributed) | Xe2 (Battlemage) | 12 GB (10.2 GiB pool) | xla | default | 684.2 ms | 16.42 s |
+| Masked Mesh Attention (`scripts/attn_bench.py`) | 0.25° mesh (40,962 nodes) | xla | default | — | 684.2 ms/layer | Attention only, ×24 layers = 16.42 s |
+| Full Forward Step (`WeatherNextCyclones_Mini`) | 1° (84 vars) | xla | default | 0.58 GiB | 1.10 s/step | End-to-end forward pass; >0.999 corr vs +6h analysis |
 
-Files: [`results/intel_b580/`](results/intel_b580/) (`fwn_info.txt`, `attn_bench.txt`). All unit tests pass (`pytest -q`).
+### Full 0.25° Step Status
+
+While the full model runs cleanly at 1° and the core attention layer runs at 0.25°, the full end-to-end 0.25° model currently runs out of memory on 12 GB Intel cards:
+- On NVIDIA, custom XLA GPU scheduling rematerializes the 0.25° graph into ~6.4 GiB.
+- Under Intel's generic OpenXLA compiler pass, HLO rematerialization currently plateaus near ~28 GiB live memory (`hlo_rematerialization.cc: Can't reduce memory use below 8.45GiB ... only reduced to 27.98GiB`), which exceeds 12 GB VRAM and triggers a driver device reset.
+- A full 0.25° step on Intel is therefore pending upstream OpenXLA rematerialization/scheduling improvements or hardware with $\ge 32$ GB VRAM.
+
+Files: [`results/intel_b580/`](results/intel_b580/) (`fwn_info.txt`, `attn_bench.txt`, `mini_run.txt`). All unit tests pass (`pytest -q`).
 
 ## Limitations
 
